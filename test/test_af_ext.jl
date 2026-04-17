@@ -90,9 +90,9 @@ end
     @test state["last_query"] == "what UI mode does Alice prefer?"
     @test state["last_result_count"] >= 1
 
-    # The injected message must mention "dark" — i.e. Alice's drawer was
-    # retrieved, not Bob's.
-    injected = ctx.input_messages[end].text
+    # Provider injects context under its source_id key in context_messages.
+    @test haskey(ctx.context_messages, "mempalace")
+    injected = join([m.text for m in ctx.context_messages["mempalace"]], "\n")
     @test occursin("dark", lowercase(injected))
     @test !occursin("Seattle", injected)
 
@@ -104,7 +104,8 @@ end
     push!(ctx2.input_messages, Message(:user, "where does the deploy lead work?"))
     AgentFramework.before_run!(provider, nothing, sess2, ctx2, state2)
     @test state2["last_result_count"] >= 1
-    @test occursin("Seattle", ctx2.input_messages[end].text)
+    injected2 = join([m.text for m in ctx2.context_messages["mempalace"]], "\n")
+    @test occursin("Seattle", injected2)
 end
 
 @testset "MemPalaceContextProvider — store=true round-trips turns" begin

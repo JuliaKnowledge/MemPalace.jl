@@ -172,14 +172,14 @@ using Test
     end
 
     @testset "AgentFramework extension (loaded on demand)" begin
+        local ext_loaded = false
         try
             @eval using AgentFramework
             ext_loaded = true
         catch err
             @info "AgentFramework not available — skipping ext tests" exception=err
-            ext_loaded = false
         end
-        if @isdefined(ext_loaded) && ext_loaded
+        if ext_loaded
             include("test_af_ext.jl")
         end
     end
