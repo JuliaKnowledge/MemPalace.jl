@@ -121,14 +121,12 @@ provider = MemoryContextProvider(store = store)
 native = MemPalaceContextProvider(Palace(); room = "profile")
 ```
 
-See the [AgentFramework extension example](@ref
-"MemPalace × AgentFramework extension vignette") under
-[`examples/agentframework_ext.jl`](https://github.com/JuliaKnowledge/MemPalace.jl/blob/main/examples/agentframework_ext.jl)
-for a runnable end-to-end walkthrough.
+See [`examples/agentframework_ext.jl`](https://github.com/JuliaKnowledge/MemPalace.jl/blob/main/examples/agentframework_ext.jl)
+for a runnable end-to-end walkthrough of the AgentFramework extension.
 
 ## Next steps
 
 * Run [`examples/quickstart.jl`](https://github.com/JuliaKnowledge/MemPalace.jl/blob/main/examples/quickstart.jl)
   and [`examples/agentframework_ext.jl`](https://github.com/JuliaKnowledge/MemPalace.jl/blob/main/examples/agentframework_ext.jl).
-* Read the [AgentFramework Memory Backends Compared](../../AgentFramework.jl/docs/src/vignettes/memory_backends_compared.md)
+* Read the [AgentFramework Memory Backends Compared](https://juliaknowledge.github.io/AgentFramework.jl/vignettes/memory_backends_compared/)
   vignette to see when to pick MemPalace vs Mem0 vs Graphiti.
