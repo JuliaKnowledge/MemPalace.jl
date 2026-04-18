@@ -1,9 +1,10 @@
 [deps]
+AgentFramework = "8d84e483-4b84-4e3c-9ca2-3749d621083b"
+AzureIdentity = "1b7b9afa-6387-4f08-b495-223719ee650f"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Mem0 = "111c52c1-a189-4018-bb23-b883ef531b41"
 MemPalace = "5734aa56-421a-450a-978e-811fc8f77994"
-
-[sources]
-MemPalace = {path = ".."}
 
 [compat]
 Documenter = "1"
+julia = "1.10"
