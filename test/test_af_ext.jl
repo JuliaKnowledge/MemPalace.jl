@@ -108,6 +108,45 @@ end
     @test occursin("Seattle", injected2)
 end
 
+@testset "MemPalaceContextProvider metadata overrides constructor scope" begin
+    p = Palace(embedder = DeterministicEmbedder(64))
+    mine_text!(p, "Alice likes dark mode."; wing="alice", room="profile")
+    mine_text!(p, "Bob works from Seattle."; wing="bob", room="ops")
+
+    provider = Ext.MemPalaceContextProvider(p;
+        wing = "alice",
+        room = "profile",
+        n_results = 2,
+        store = false,
+    )
+
+    sess = AgentSession()
+    sess.metadata["memory_scope"] = "bob"
+    sess.metadata["memory_kind"] = "ops"
+    ctx = SessionContext()
+    push!(ctx.input_messages, Message(:user, "where does Bob work?"))
+    state = Dict{String, Any}()
+
+    AgentFramework.before_run!(provider, nothing, sess, ctx, state)
+
+    injected = join([m.text for m in ctx.context_messages["mempalace"]], "\n")
+    @test occursin("Seattle", injected)
+    @test !occursin("dark mode", injected)
+end
+
+@testset "MemPalaceMemoryStore updates existing record ids" begin
+    p = Palace(embedder = DeterministicEmbedder(64))
+    store = Ext.MemPalaceMemoryStore(palace = p)
+
+    rec = MemoryRecord(id="rec-1", scope="alice", role=:user, content="first")
+    add_memories!(store, [rec])
+    add_memories!(store, [MemoryRecord(id="rec-1", scope="alice", role=:user, content="second")])
+
+    records = get_memories(store; scope="alice")
+    @test length(records) == 1
+    @test records[1].content == "second"
+end
+
 @testset "MemPalaceContextProvider — store=true round-trips turns" begin
     p = Palace(embedder = DeterministicEmbedder(64))
     provider = Ext.MemPalaceContextProvider(p;

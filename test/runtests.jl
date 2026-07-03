@@ -91,6 +91,8 @@ using Test
         @test count_closets(b) == 1
         cpairs = query_closets(b, embed(e, "topic"); wing="w1", n_results=5)
         @test length(cpairs) == 1
+        @test delete_closets!(b; ids=["c1"]) == 1
+        @test count_closets(b) == 0
 
         clear!(b)
         @test count_drawers(b) == 0
@@ -140,6 +142,20 @@ using Test
                                source_file="refactor.md")
         @test count_drawers(p.backend) == length(drawers2)
         @test count_drawers(p.backend) <= n_before  # never grows
+    end
+
+    @testset "re-mining a source replaces stale closets" begin
+        p = Palace(embedder = DeterministicEmbedder(64))
+        long_text = join([
+            "Alice fixed parser bug number $(i). Bob reviewed deployment plan $(i). Acme shipped release $(i)."
+            for i in 1:80
+        ], " ")
+        mine_text!(p, long_text; wing="alice", room="notes", source_file="long.md")
+        @test count_closets(p.backend) > 1
+
+        mine_text!(p, "Alice kept only the parser fix summary.";
+                   wing="alice", room="notes", source_file="long.md")
+        @test count_closets(p.backend) == 1
     end
 
     @testset "mine_conversation!" begin

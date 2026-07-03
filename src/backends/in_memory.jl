@@ -52,6 +52,18 @@ get_drawer(b::InMemoryPalaceBackend, id::AbstractString) = get(b.drawers, String
 
 count_drawers(b::InMemoryPalaceBackend)::Int = length(b.drawers)
 
+function list_drawers(b::InMemoryPalaceBackend;
+                      wing::Union{Nothing, AbstractString} = nothing,
+                      room::Union{Nothing, AbstractString} = nothing,
+                      source_file::Union{Nothing, AbstractString} = nothing)::Vector{Drawer}
+    out = Drawer[]
+    for d in values(b.drawers)
+        _drawer_passes_filter(d; wing, room, source_file) || continue
+        push!(out, d)
+    end
+    return out
+end
+
 # ── Closets ──────────────────────────────────────────────────────────────────
 
 function add_closet!(b::InMemoryPalaceBackend, closet::Closet, embedding::Vector{Float64})
@@ -68,6 +80,18 @@ function upsert_closet!(b::InMemoryPalaceBackend, closet::Closet, embedding::Vec
 end
 
 count_closets(b::InMemoryPalaceBackend)::Int = length(b.closets)
+
+function _topk_by_distance!(scored::Vector{T}, n_results::Int) where {T}
+    n = length(scored)
+    n == 0 && return scored
+    k = min(n_results, n)
+    if k < n
+        partialsort!(scored, 1:k; by = x -> x[2])
+        return scored[1:k]
+    end
+    sort!(scored; by = x -> x[2])
+    return scored
+end
 
 # ── Querying ─────────────────────────────────────────────────────────────────
 
@@ -114,8 +138,7 @@ function query_drawers(b::InMemoryPalaceBackend,
         dist > max_distance && continue
         push!(scored, (d, dist))
     end
-    sort!(scored; by = x -> x[2])
-    return scored[1:min(n_results, length(scored))]
+    return _topk_by_distance!(scored, n_results)
 end
 
 """
@@ -136,8 +159,7 @@ function query_closets(b::InMemoryPalaceBackend,
         emb = b.closet_emb[id]
         push!(scored, (c, 1.0 - _cosine(query_embedding, emb)))
     end
-    sort!(scored; by = x -> x[2])
-    return scored[1:min(n_results, length(scored))]
+    return _topk_by_distance!(scored, n_results)
 end
 
 """
@@ -167,6 +189,30 @@ function delete_drawers!(b::InMemoryPalaceBackend;
     for id in to_remove
         delete!(b.drawers, id)
         delete!(b.drawer_emb, id)
+    end
+    return length(to_remove)
+end
+
+function delete_closets!(b::InMemoryPalaceBackend;
+                         source_file::Union{Nothing, AbstractString} = nothing,
+                         ids::Union{Nothing, Vector{<:AbstractString}} = nothing)::Int
+    source_file === nothing && ids === nothing &&
+        throw(ArgumentError("supply source_file or ids"))
+    to_remove = String[]
+    if source_file !== nothing
+        for (id, c) in b.closets
+            c.source_file == source_file && push!(to_remove, id)
+        end
+    end
+    if ids !== nothing
+        for id in ids
+            haskey(b.closets, String(id)) && push!(to_remove, String(id))
+        end
+    end
+    unique!(to_remove)
+    for id in to_remove
+        delete!(b.closets, id)
+        delete!(b.closet_emb, id)
     end
     return length(to_remove)
 end

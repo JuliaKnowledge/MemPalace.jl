@@ -9,7 +9,7 @@ using MemPalace: Palace, Drawer, SearchHit, SearchResults, mine_text!,
                  _pack_and_store_closets!, AbstractMemPalaceEmbedder,
                  AbstractPalaceBackend, InMemoryPalaceBackend,
                  DeterministicEmbedder, add_drawer!, query_drawers,
-                 delete_drawers!, count_drawers
+                 delete_drawers!, count_drawers, list_drawers
 
 using AgentFramework: AbstractMemoryStore, MemoryRecord, MemorySearchResult,
                       BaseContextProvider, AgentSession, SessionContext,
@@ -117,6 +117,9 @@ end
 
 function add_memories!(store::MemPalaceMemoryStore, records::AbstractVector{MemoryRecord})
     for rec in records
+        if haskey(store.record_to_drawer, rec.id)
+            delete_drawers!(store.palace.backend; ids = [store.record_to_drawer[rec.id]])
+        end
         d = _record_to_drawer(store, rec)
         emb = embed(store.palace.embedder, d.text)
         add_drawer!(store.palace.backend, d, emb)
@@ -145,8 +148,7 @@ function get_memories(store::MemPalaceMemoryStore;
                        scope::Union{Nothing, AbstractString} = nothing,
                        limit::Union{Nothing, Int} = nothing)::Vector{MemoryRecord}
     out = MemoryRecord[]
-    for (_, d) in store.palace.backend.drawers
-        scope !== nothing && d.wing != scope && continue
+    for d in list_drawers(store.palace.backend; wing = scope)
         push!(out, _drawer_to_record(d))
     end
     sort!(out; by = r -> r.created_at)
@@ -160,12 +162,13 @@ function clear_memories!(store::MemPalaceMemoryStore;
                           scope::Union{Nothing, AbstractString} = nothing)
     if scope === nothing
         MemPalace.clear!(store.palace.backend)
+        empty!(store.record_to_drawer)
     else
-        ids = String[]
-        for (id, d) in store.palace.backend.drawers
-            d.wing == String(scope) && push!(ids, id)
-        end
+        ids = [d.id for d in list_drawers(store.palace.backend; wing = scope)]
         delete_drawers!(store.palace.backend; ids = ids)
+        for (record_id, drawer_id) in collect(store.record_to_drawer)
+            drawer_id in ids && delete!(store.record_to_drawer, record_id)
+        end
     end
     return store
 end
@@ -240,22 +243,22 @@ function Base.show(io::IO, p::MemPalaceContextProvider)
 end
 
 function _resolve_wing(p::MemPalaceContextProvider, session::AgentSession)::Union{Nothing, String}
-    p.wing !== nothing && return p.wing
     if haskey(session.metadata, p.wing_metadata_key)
         v = session.metadata[p.wing_metadata_key]
         v !== nothing && !isempty(strip(string(v))) && return strip(string(v))
     end
+    p.wing !== nothing && return p.wing
     session.user_id !== nothing && return session.user_id
     session.thread_id !== nothing && return session.thread_id
     return session.id
 end
 
 function _resolve_room(p::MemPalaceContextProvider, session::AgentSession)::Union{Nothing, String}
-    p.room !== nothing && return p.room
     if haskey(session.metadata, p.room_metadata_key)
         v = session.metadata[p.room_metadata_key]
         v !== nothing && !isempty(strip(string(v))) && return strip(string(v))
     end
+    p.room !== nothing && return p.room
     return nothing
 end
 

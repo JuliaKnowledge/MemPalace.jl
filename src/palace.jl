@@ -90,6 +90,7 @@ function mine_text!(p::Palace, text::AbstractString;
                     build_closets::Bool = true)::Vector{Drawer}
     if !isempty(source_file)
         delete_drawers!(p.backend; source_file = source_file)
+        delete_closets!(p.backend; source_file = source_file)
     end
 
     chunks = _chunk_text(text, p.chunk_chars, p.chunk_overlap)
@@ -132,6 +133,7 @@ function mine_conversation!(p::Palace, messages;
                             source_file::AbstractString = "")::Vector{Drawer}
     if !isempty(source_file)
         delete_drawers!(p.backend; source_file = source_file)
+        delete_closets!(p.backend; source_file = source_file)
     end
     drawers = Drawer[]
     for (i, m) in enumerate(messages)

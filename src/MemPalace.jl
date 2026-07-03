@@ -79,8 +79,8 @@ include("palace.jl")
 export Drawer, Closet, SearchHit, SearchResults
 export AbstractPalaceBackend, InMemoryPalaceBackend
 export add_drawer!, upsert_drawer!, add_closet!, upsert_closet!,
-       get_drawer, query_drawers, query_closets,
-       delete_drawers!, count_drawers, count_closets, clear!
+       get_drawer, list_drawers, query_drawers, query_closets,
+       delete_drawers!, delete_closets!, count_drawers, count_closets, clear!
 export AbstractMemPalaceEmbedder, DeterministicEmbedder, OllamaEmbedder, embed
 export build_closet_lines, extract_entities, extract_topics
 export bm25_scores, hybrid_rank!

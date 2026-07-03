@@ -12,11 +12,13 @@ implement *all* of:
   * `add_drawer!(b, drawer, embedding)`
   * `upsert_drawer!(b, drawer, embedding)`
   * `get_drawer(b, id)`
+  * `list_drawers(b; wing=nothing, room=nothing, source_file=nothing)`
   * `query_drawers(b, query_embedding, query_text; ...)`
   * `add_closet!(b, closet, embedding)`
   * `upsert_closet!(b, closet, embedding)`
   * `query_closets(b, query_embedding; ...)`
   * `delete_drawers!(b; source_file=nothing, ids=nothing)`
+  * `delete_closets!(b; source_file=nothing, ids=nothing)`
   * `count_drawers(b)`
   * `count_closets(b)`
   * `clear!(b)`
@@ -33,6 +35,7 @@ function add_drawer! end
 "Insert or update a `Drawer` (with embedding) by id."
 function upsert_drawer! end
 function get_drawer end
+function list_drawers end
 function query_drawers end
 "Insert a `Closet` together with its precomputed embedding."
 function add_closet! end
@@ -40,6 +43,7 @@ function add_closet! end
 function upsert_closet! end
 function query_closets end
 function delete_drawers! end
+function delete_closets! end
 function count_drawers end
 function count_closets end
 function clear! end
